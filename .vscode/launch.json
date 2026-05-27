@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "go-version",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/hack/debug.go",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal" 
+    }
+  ]
+}
