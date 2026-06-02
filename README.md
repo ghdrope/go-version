@@ -39,6 +39,7 @@ fmt.Println(version.Short())
 
 ### Structured Print
 
+```go
 info := version.Get()
 
 fmt.Println(info.Version)
@@ -46,6 +47,7 @@ fmt.Println(info.GitCommit)
 fmt.Println(info.BuildDate)
 fmt.Println(info.GoVersion)
 fmt.Println(info.Platform)
+```
 
 ---
 
