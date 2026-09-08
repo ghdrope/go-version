@@ -1,0 +1,7 @@
+# Exclude build files from language statistics
+Makefile linguist-detectable=false
+*.mk linguist-detectable=false
+
+# Ensure Go source files are prioritized
+*.go linguist-detectable=true
+*.go linguist-language=Go
