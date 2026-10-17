@@ -91,6 +91,21 @@ lint: ## Run golangci-lint
 	fi
 
 
+# ==== Build lifecycle ====
+.PHONY: build
+build: ## Build a single component binary
+	@echo "[TASK] Building"
+
+	@mkdir -p "$(CACHE_DIR)/$(GOCACHE_DIR)" "$(BIN_DIR)"
+	@export GOCACHE="$(CACHE_DIR)/$(GOCACHE_DIR)" && \
+	\
+	go mod download && \
+	echo "🔨 Building binary" && \
+	go build \
+		-o "$(BIN_DIR)/$(PROJECT_NAME)" "$(PWD)"; \
+	echo "✅ Build completed successfully"; \
+
+
 # ==== Tests ====
 .PHONY: test-unit
 test-unit: ## Run unit tests with coverage enforcement
