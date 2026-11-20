@@ -22,7 +22,7 @@ UNIT_TEST_XML_ARTIFACT := coverage.xml
 VERSION ?= development
 
 # Export coverage variables to shell
-export MIN_COVERAGE=50.0
+export MIN_COVERAGE=70.0
 
 
 # ==== Convenience targets ====
@@ -114,7 +114,7 @@ test-unit: ## Run unit tests with coverage enforcement
 
 	COVERAGE_MIN=$$MIN_COVERAGE; \
 	\
-	go test -v -coverprofile="$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)/$(PROJECT_NAME)-$(UNIT_TEST_OUT_ARTIFACT)" ./... && \
+	go test -v -coverprofile="$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)/$(PROJECT_NAME)-$(UNIT_TEST_OUT_ARTIFACT)" $$(go list ./... | grep -v /hack) && \
 	\
 	COVERAGE_ACTUAL=$$(go tool cover -func="$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)/$(PROJECT_NAME)-$(UNIT_TEST_OUT_ARTIFACT)" | grep total: | awk '{print substr($$3,1,length($$3)-1)}') && \
 	if awk "BEGIN {exit !($$COVERAGE_ACTUAL >= $$COVERAGE_MIN)}"; then \

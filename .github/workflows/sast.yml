@@ -21,12 +21,10 @@ on:
     paths:
       - 'Makefile'
       - '.github/workflows/**/*'
-      - 'cmd/**/*'
-      - 'internal/**/*'
-      - 'pkg/**/*'
+      - 'version.go'
+      - 'version_test.go'
       - 'go.mod'
       - 'go.sum'
-      - 'Docker/**/*'
 
 permissions:
   contents: read

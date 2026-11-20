@@ -22,12 +22,12 @@ go get github.com/ghdrope/go-version
 
 ```go
 import (
-	"fmt"
-	"github.com/ghdrope/go-version"
+  "fmt"
+  "github.com/ghdrope/go-version"
 )
 
 func main() {
-	fmt.Println(version.String())
+  fmt.Println(version.String())
 }
 ```
 
@@ -37,16 +37,34 @@ func main() {
 fmt.Println(version.Short())
 ```
 
-### Structured Print
+### Output
+
+`version.String()`:
+
+```text
+Version   : v1.0.0
+GitCommit : abc123
+BuildDate : 2026-01-01
+GoVersion : go1.27.4
+Platform  : linux/amd64
+```
+
+`version.Short()`:
+
+```text
+Version:    v1.0.0
+```
+
+Without `ldflags` (e.g. `go run`), the defaults are `development`, `none` and `unknown`.
+
+### Individual Values
+
+The build values are exported variables and can be read directly:
 
 ```go
-info := version.Get()
-
-fmt.Println(info.Version)
-fmt.Println(info.GitCommit)
-fmt.Println(info.BuildDate)
-fmt.Println(info.GoVersion)
-fmt.Println(info.Platform)
+fmt.Println(version.Version)
+fmt.Println(version.GitCommit)
+fmt.Println(version.BuildDate)
 ```
 
 ---
@@ -57,16 +75,16 @@ You can easily expose it via a CLI command (example using cobra):
 
 ```go
 Run: func(cmd *cobra.Command, _ []string) {
-	fmt.Println(version.String())
+  fmt.Println(version.String())
 }
 ```
 
 Optional short flag:
 
-```
+```go
 if short {
-	fmt.Println(version.Short())
-	return
+  fmt.Println(version.Short())
+  return
 }
 ```
 
@@ -80,7 +98,7 @@ These values are typically injected at build using `ldflags`:
 
 ```bash
 go build -ldflags "
-	-X github.com/ghdrope/go-version.Version=v1.0.0
-	-X github.com/ghdrope/go-version.GitCommit=abc123
-	-X github.com/ghdrope/go-version.BuildDate=2026-01-01"
+  -X github.com/ghdrope/go-version.Version=v1.0.0
+  -X github.com/ghdrope/go-version.GitCommit=abc123
+  -X github.com/ghdrope/go-version.BuildDate=2026-01-01"
 ```
