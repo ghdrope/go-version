@@ -12,6 +12,8 @@ CACHE_DIR := $(PWD)/.cache
 GIT_COMMIT ?= $(shell git rev-parse HEAD)
 GOCACHE_DIR := go-build
 GOVULNCHECK_ARTIFACT := govulncheck-report.json
+# Space separated list of govulncheck IDs to ignore (e.g. GO-2026-0001)
+GOVULN_ALLOWLIST :=
 PREFIX ?= /usr/local
 # Must match GitHub repository name
 PROJECT_NAME := go-version
@@ -59,9 +61,23 @@ check-vulnerability: ## Run vulnerability check on project
 	@mkdir -p "$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)"
 	go run golang.org/x/vuln/cmd/govulncheck@latest -json ./... > "$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)/$(GOVULNCHECK_ARTIFACT)"
 	@if [ -s "$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)/$(GOVULNCHECK_ARTIFACT)" ] && grep -q '"finding"' "$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)/$(GOVULNCHECK_ARTIFACT)"; then \
-		echo "❌ Vulnerabilities found:"; \
-		jq -r 'select(.finding != null) | .finding as $$f | $$f.trace[] | "Package: \(.module) ~> Fixed version: \($$f.fixed_version)"' "$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)/$(GOVULNCHECK_ARTIFACT)" | sort -u; \
-		exit 1; \
+		echo "🔍 Checking vulnerabilities against allowlist"; \
+		UNRESOLVED=$$(jq -r 'select(.finding != null) | .finding.osv' "$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)/$(GOVULNCHECK_ARTIFACT)" | sort -u | \
+			while read vuln; do \
+				if echo "$(GOVULN_ALLOWLIST)" | grep -qw "$$vuln"; then \
+					echo "⚠️ Ignored allowlisted vulnerability: $$vuln" >&2; \
+				else \
+					echo "$$vuln"; \
+				fi; \
+			done); \
+		if [ -n "$$UNRESOLVED" ]; then \
+			echo "❌ Vulnerabilities found:"; \
+			jq -r 'select(.finding != null) | .finding as $$f | $$f.trace[] | "Package: \(.module) ~> Fixed version: \($$f.fixed_version) ~> ID: \($$f.osv)"' \
+				"$(ARTIFACTS_DIR)/$(SECURITY_ARTIFACTS_DIR)/$(GOVULNCHECK_ARTIFACT)" | sort -u; \
+			exit 1; \
+		else \
+			echo "✅ No known vulnerabilities found"; \
+		fi; \
 	else \
 		echo "✅ No known vulnerabilities found"; \
 	fi
@@ -108,13 +124,17 @@ build: ## Build a single component binary
 
 # ==== Tests ====
 .PHONY: test-unit
+# cmd/ and hack/ are entrypoints without tests and would only lower the total coverage
 test-unit: ## Run unit tests with coverage enforcement
 	@echo "[TASK] Running unit tests"
 	@mkdir -p "$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)"
 
+	PACKAGES=$$(go list ./... | grep -vE '/(cmd|hack|tests|testhelper)(/|$$)') && \
+	echo "$$PACKAGES" && \
+	\
 	COVERAGE_MIN=$$MIN_COVERAGE; \
 	\
-	go test -v -coverprofile="$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)/$(PROJECT_NAME)-$(UNIT_TEST_OUT_ARTIFACT)" $$(go list ./... | grep -v /hack) && \
+	go test -v -coverprofile="$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)/$(PROJECT_NAME)-$(UNIT_TEST_OUT_ARTIFACT)" $$PACKAGES && \
 	\
 	COVERAGE_ACTUAL=$$(go tool cover -func="$(ARTIFACTS_DIR)/$(SDLC_ARTIFACTS_DIR)/$(PROJECT_NAME)-$(UNIT_TEST_OUT_ARTIFACT)" | grep total: | awk '{print substr($$3,1,length($$3)-1)}') && \
 	if awk "BEGIN {exit !($$COVERAGE_ACTUAL >= $$COVERAGE_MIN)}"; then \
