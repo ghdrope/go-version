@@ -54,7 +54,7 @@ func (i info) string() string {
 	return sb.String()
 }
 
-// Short returns only the version string.
+// short returns only the version string.
 func (i info) short() string {
 	return fmt.Sprintf("Version:    %s", i.Version)
 }
